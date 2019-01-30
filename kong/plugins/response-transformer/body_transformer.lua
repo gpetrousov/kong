@@ -15,6 +15,18 @@ local noop = function() end
 
 local _M = {}
 
+-- Renames a single key name from the body without changing it's value
+local function rename_body_key(body, old_key_name, new_key_name)
+  if body then
+		local key_value = body[old_key_name]
+		body[old_key_name] = nil
+		body[new_key_name] = key_value
+	  return body
+	else
+		print("No body, or body is encrypted")
+		return
+  end
+end
 
 local function read_json_body(body)
   if body then
@@ -73,12 +85,16 @@ function _M.transform_json_body(conf, buffered_data)
     return
   end
 
-  -- remove key:value to body
+  -- remove key:value from body
+  -- ex. --data "config.remove.json=json-key-toremove, another-json-key"
   for _, name in iter(conf.remove.json) do
     json_body[name] = nil
   end
 
-  -- replace key:value to body
+  -- replace key:value from body
+  -- Will replace the value of the corresponding key
+  -- ex. --data '{"name": "response-transformer", "config": {"replace": {"json": ["catalogEntryNavView:items"]}}}'
+  -- replaces the value(s) of catalogEntryNavView to the word items
   for _, name, value in iter(conf.replace.json) do
     local v = cjson.encode(value)
     if v and sub(v, 1, 1) == [["]] and sub(v, -1, -1) == [["]] then
@@ -89,6 +105,16 @@ function _M.transform_json_body(conf, buffered_data)
     if json_body[name] and v then
       json_body[name] = v
     end
+  end
+
+	-- rename body keys
+  for _, name, value in iter(conf.rename_body_key.json) do
+    local v = cjson.encode(value)
+    if v and sub(v, 1, 1) == [["]] and sub(v, -1, -1) == [["]] then
+      v = gsub(sub(v, 2, -2), [[\"]], [["]]) -- To prevent having double encoded quotes
+    end
+    v = v and gsub(v, [[\/]], [[/]]) -- To prevent having double encoded slashes
+		rename_body_key(json_body, name, v)
   end
 
   -- add new key:value to body

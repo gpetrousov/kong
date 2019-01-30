@@ -40,6 +40,7 @@ end
 local function is_body_transform_set(conf)
   return #conf.add.json     > 0 or
          #conf.remove.json  > 0 or
+         #conf.rename_body_key.json  > 0 or
          #conf.replace.json > 0 or
          #conf.append.json  > 0
 end

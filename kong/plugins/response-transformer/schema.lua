@@ -43,6 +43,7 @@ return {
         fields = {
           { remove = string_record },
           { replace = colon_string_record },
+          { rename_body_key = colon_string_record },
           { add = colon_string_record },
           { append = colon_string_record },
         },
